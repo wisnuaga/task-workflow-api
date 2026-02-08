@@ -16,8 +16,8 @@ export class TaskHandler {
             const input: CreateTaskInput = {
                 tenantId: headers["x-tenant-id"] as string,
                 workspaceId: params.workspaceId,
-                title: body.title,
-                priority: body.priority as TaskPriority,
+                title: body?.title,
+                priority: body?.priority as TaskPriority,
                 idempotencyKey: headers["idempotency-key"] as string,
             };
 
