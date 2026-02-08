@@ -52,7 +52,7 @@ describe("TaskService", () => {
                 title: "Test Task",
                 priority: TaskPriority.HIGH,
                 state: TaskState.NEW,
-            });
+            }, undefined);
             expect(result.task).toEqual(createdTask);
         });
 
@@ -89,7 +89,7 @@ describe("TaskService", () => {
                 title: "Task without priority",
                 priority: TaskPriority.MEDIUM,
                 state: TaskState.NEW,
-            });
+            }, undefined);
             expect(result.task.priority).toBe(TaskPriority.MEDIUM);
         });
 
