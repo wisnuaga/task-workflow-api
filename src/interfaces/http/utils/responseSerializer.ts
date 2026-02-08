@@ -41,6 +41,19 @@ function serializeTaskPriority(priority: TaskPriority): string {
 }
 
 /**
+ * Formats a Date object or ISO string to ISO string
+ */
+function formatTimestamp(timestamp: any): string {
+    if (timestamp instanceof Date) {
+        return timestamp.toISOString();
+    }
+    if (typeof timestamp === "string") {
+        return timestamp;
+    }
+    return new Date(timestamp).toISOString();
+}
+
+/**
  * Serialize Task entity to snake_case API response format
  */
 export function serializeTask(task: Task) {
@@ -53,7 +66,7 @@ export function serializeTask(task: Task) {
         state: serializeTaskState(task.state),
         assignee_id: task.assigneeId,
         version: task.version,
-        created_at: task.createdAt.toISOString(),
-        updated_at: task.updatedAt.toISOString(),
+        created_at: formatTimestamp(task.createdAt),
+        updated_at: formatTimestamp(task.updatedAt),
     };
 }
