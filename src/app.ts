@@ -6,7 +6,7 @@ export function buildApp(): FastifyInstance {
     });
 
     app.get("/health", async () => {
-        return { ok: true };
+        return { status: "ok" };
     });
 
     return app;
