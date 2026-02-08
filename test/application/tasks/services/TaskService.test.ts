@@ -14,6 +14,7 @@ describe("TaskService", () => {
     beforeEach(() => {
         mockUseCase = {
             create: vi.fn(),
+            assign: vi.fn(),
         };
         service = new TaskService(mockUseCase);
     });
@@ -235,9 +236,10 @@ describe("TaskService", () => {
         it("should throw ValidationError when role is missing", async () => {
             // Arrange
             const input = {
-                tenantId: "tenant-9",
-                workspaceId: "workspace-9",
+                tenantId: "tenant-4",
+                workspaceId: "workspace-4",
                 title: "No Role Task",
+                role: UserRole.UNSPECIFIED,
             };
 
             // Act & Assert
@@ -246,6 +248,140 @@ describe("TaskService", () => {
             );
             await expect(service.createTask(input)).rejects.toThrow(
                 "role is required"
+            );
+        });
+    });
+
+    describe("assignTask", () => {
+        beforeEach(() => {
+            mockUseCase.assign = vi.fn();
+        });
+
+        it("should assign task successfully with MANAGER role", async () => {
+            // Arrange
+            const input = {
+                taskId: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                assigneeId: "user-1",
+                expectedVersion: 1,
+                role: UserRole.MANAGER,
+            };
+
+            const assignedTask: Task = {
+                id: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                title: "Test Task",
+                priority: TaskPriority.HIGH,
+                state: TaskState.NEW,
+                assigneeId: "user-1",
+                version: 2,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+
+            vi.mocked(mockUseCase.assign).mockResolvedValue(assignedTask);
+
+            // Act
+            const result = await service.assignTask(input);
+
+            // Assert
+            expect(mockUseCase.assign).toHaveBeenCalledWith({
+                taskId: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                assigneeId: "user-1",
+                expectedVersion: 1,
+            }, undefined);
+            expect(result.task).toEqual(assignedTask);
+        });
+
+        it("should throw AuthorizationError when role is not MANAGER", async () => {
+            // Arrange
+            const input = {
+                taskId: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                assigneeId: "user-1",
+                expectedVersion: 1,
+                role: UserRole.AGENT,
+            };
+
+            // Act & Assert
+            await expect(service.assignTask(input)).rejects.toThrow("Only managers can assign tasks");
+        });
+
+        it("should throw ValidationError when taskId is missing", async () => {
+            // Arrange
+            const input = {
+                taskId: "",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                assigneeId: "user-1",
+                expectedVersion: 1,
+                role: UserRole.MANAGER,
+            };
+
+            // Act & Assert
+            await expect(service.assignTask(input)).rejects.toThrow(ValidationError);
+            await expect(service.assignTask(input)).rejects.toThrow("taskId is required");
+        });
+
+        it("should throw ValidationError when assigneeId is missing", async () => {
+            // Arrange
+            const input = {
+                taskId: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                assigneeId: "",
+                expectedVersion: 1,
+                role: UserRole.MANAGER,
+            };
+
+            // Act & Assert
+            await expect(service.assignTask(input)).rejects.toThrow(ValidationError);
+            await expect(service.assignTask(input)).rejects.toThrow("assignee_id is required");
+        });
+
+        it("should pass idempotency key to use case", async () => {
+            // Arrange
+            const idempotencyKey = "idempotency-key-123";
+            const input = {
+                taskId: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                assigneeId: "user-1",
+                expectedVersion: 1,
+                role: UserRole.MANAGER,
+                idempotencyKey,
+            };
+
+            const assignedTask: Task = {
+                id: "task-1",
+                tenantId: "tenant-1",
+                workspaceId: "workspace-1",
+                title: "Test Task",
+                priority: TaskPriority.HIGH,
+                state: TaskState.NEW,
+                assigneeId: "user-1",
+                version: 2,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+
+            vi.mocked(mockUseCase.assign).mockResolvedValue(assignedTask);
+
+            // Act
+            await service.assignTask(input);
+
+            // Assert
+            expect(mockUseCase.assign).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    taskId: "task-1",
+                    assigneeId: "user-1",
+                }),
+                idempotencyKey
             );
         });
     });
