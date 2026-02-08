@@ -7,4 +7,8 @@ export async function taskRoutes(fastify: FastifyInstance, options: { taskHandle
     fastify.post("/v1/workspaces/:workspaceId/tasks", async (request, reply) => {
         return taskHandler.createTask(request, reply);
     });
+
+    fastify.post("/v1/workspaces/:workspaceId/tasks/:taskId/assign", async (request, reply) => {
+        return taskHandler.assignTask(request, reply);
+    });
 }
