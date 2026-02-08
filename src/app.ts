@@ -25,7 +25,7 @@ export function buildApp(): FastifyInstance {
 
     // Dependency Injection
     const taskRepository = new TaskRepository(dbClient);
-    const taskUseCase = new TaskUseCase(taskRepository);
+    const taskUseCase = new TaskUseCase(taskRepository, dbClient);
     const taskService = new TaskService(taskUseCase);
     const taskHandler = new TaskHandler(taskService);
 
