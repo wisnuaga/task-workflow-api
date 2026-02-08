@@ -5,15 +5,21 @@ import { TaskState } from "../../../src/domain/tasks/entities/TaskState";
 import { TaskPriority } from "../../../src/domain/tasks/entities/TaskPriority";
 import { Task } from "../../../src/domain/tasks/entities/Task";
 
+import { ITaskEventRepository } from "../../../src/domain/tasks/repositories/ITaskEventRepository";
+
 import { IDBClient } from "../../../src/application/interfaces/db/IDBClient";
 
 describe("TaskUseCase", () => {
     let useCase: TaskUseCase;
     let mockRepository: ITaskRepository;
+    let mockTaskEventRepository: ITaskEventRepository;
     let mockDb: IDBClient;
 
     beforeEach(() => {
         mockRepository = {
+            create: vi.fn(),
+        };
+        mockTaskEventRepository = {
             create: vi.fn(),
         };
         mockDb = {
@@ -21,7 +27,7 @@ describe("TaskUseCase", () => {
             transaction: vi.fn().mockImplementation(async (cb) => cb(mockDb)),
         } as unknown as IDBClient;
 
-        useCase = new TaskUseCase(mockRepository, mockDb);
+        useCase = new TaskUseCase(mockRepository, mockTaskEventRepository, mockDb);
     });
 
     describe("create", () => {
@@ -56,6 +62,13 @@ describe("TaskUseCase", () => {
             // Assert
             expect(mockRepository.create).toHaveBeenCalledTimes(1);
             expect(mockRepository.create).toHaveBeenCalledWith(taskInput, mockDb);
+            // Verify event creation
+            expect(mockTaskEventRepository.create).toHaveBeenCalledWith({
+                tenantId: createdTask.tenantId,
+                workspaceId: createdTask.workspaceId,
+                taskId: createdTask.id,
+                snapshot: createdTask
+            }, mockDb);
             expect(result).toEqual(createdTask);
         });
 
