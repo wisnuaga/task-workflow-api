@@ -4,6 +4,7 @@ import { ITaskService } from "../../../../src/application/tasks/services/ITaskSe
 import { ValidationError } from "../../../../src/application/tasks/services/errors/ValidationError";
 import { TaskPriority } from "../../../../src/domain/tasks/entities/TaskPriority";
 import { TaskState } from "../../../../src/domain/tasks/entities/TaskState";
+import { UserRole } from "../../../../src/domain/users/entities/UserRole";
 
 describe("TaskHandler", () => {
     let handler: TaskHandler;
@@ -69,6 +70,7 @@ describe("TaskHandler", () => {
                 title: "Test Task",
                 priority: "HIGH",
                 idempotencyKey: undefined,
+                role: UserRole.UNSPECIFIED,
             });
             expect(mockReply.code).toHaveBeenCalledWith(201);
             expect(mockReply.send).toHaveBeenCalledWith(createdTaskOutput);
@@ -124,6 +126,26 @@ describe("TaskHandler", () => {
             expect(mockService.createTask).toHaveBeenCalledWith(
                 expect.objectContaining({
                     idempotencyKey: "key-123",
+                })
+            );
+        });
+
+        it("should parse x-role header and pass to service", async () => {
+            // Arrange
+            mockRequest.headers["x-tenant-id"] = "tenant-1";
+            mockRequest.params.workspaceId = "workspace-1";
+            mockRequest.body = { title: "Test Task" };
+            mockRequest.headers["x-role"] = "Agent";
+
+            vi.mocked(mockService.createTask).mockResolvedValue({ task: {} as any });
+
+            // Act
+            await handler.createTask(mockRequest, mockReply);
+
+            // Assert
+            expect(mockService.createTask).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    role: UserRole.AGENT,
                 })
             );
         });
