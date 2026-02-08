@@ -1,21 +1,22 @@
-import { DBClient } from "../DBClient";
+import { IDBClient } from "../../../application/interfaces/db/IDBClient";
 import { ITaskRepository } from "../../../domain/tasks/repositories/ITaskRepository";
 import { Task } from "../../../domain/tasks/entities/Task";
 
 export class TaskRepository implements ITaskRepository {
-    constructor(private readonly db: DBClient) { }
+    constructor(private readonly db: IDBClient) { }
 
-    async create(task: Omit<Task, "id" | "assigneeId" | "version" | "createdAt" | "updatedAt">): Promise<Task> {
+    async create(task: Omit<Task, "id" | "assigneeId" | "version" | "createdAt" | "updatedAt">, tx?: IDBClient): Promise<Task> {
+        const client = tx || this.db;
+
         const sql = `
             INSERT INTO tasks (
-                id,
                 tenant_id,
                 workspace_id,
                 title,
                 priority,
                 state
             )
-            VALUES ($1, $2, $3, $4, $5, $6)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING 
                 id,
                 version,
@@ -31,7 +32,7 @@ export class TaskRepository implements ITaskRepository {
             task.state
         ];
 
-        const result = await this.db.query<{
+        const result = await client.query<{
             id: string;
             version: number;
             created_at: Date;
