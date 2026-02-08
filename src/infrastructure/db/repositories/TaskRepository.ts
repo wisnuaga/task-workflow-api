@@ -75,43 +75,51 @@ export class TaskRepository implements ITaskRepository {
                 created_at,
                 updated_at
             FROM tasks
-            WHERE tenant_id = $1 AND workspace_id = $2 AND id = $3
+            WHERE tenant_id = $1 AND workspace_id = $2 AND id = $3::uuid
         `;
 
-        const result = await client.query<{
-            id: string;
-            tenant_id: string;
-            workspace_id: string;
-            title: string;
-            priority: number;
-            state: number;
-            assignee_id: string | null;
-            version: number;
-            created_at: Date;
-            updated_at: Date;
-        }>(sql, [tenantId, workspaceId, taskId]);
+        try {
+            const result = await client.query<{
+                id: string;
+                tenant_id: string;
+                workspace_id: string;
+                title: string;
+                priority: number;
+                state: number;
+                assignee_id: string | null;
+                version: number;
+                created_at: Date;
+                updated_at: Date;
+            }>(sql, [tenantId, workspaceId, taskId]);
 
-        if (result.rows.length === 0) {
-            return null;
+            if (result.rows.length === 0) {
+                return null;
+            }
+
+            const row = result.rows[0];
+            if (!row) {
+                return null;
+            }
+
+            return {
+                id: row.id,
+                tenantId: row.tenant_id,
+                workspaceId: row.workspace_id,
+                title: row.title,
+                priority: row.priority,
+                state: row.state,
+                assigneeId: row.assignee_id,
+                version: row.version,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            };
+        } catch (error: any) {
+            // If it's a UUID format error, treat it as "not found"
+            if (error.code === '22P02') { // invalid_text_representation
+                return null;
+            }
+            throw error;
         }
-
-        const row = result.rows[0];
-        if (!row) {
-            return null;
-        }
-
-        return {
-            id: row.id,
-            tenantId: row.tenant_id,
-            workspaceId: row.workspace_id,
-            title: row.title,
-            priority: row.priority,
-            state: row.state,
-            assigneeId: row.assignee_id,
-            version: row.version,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        };
     }
 
     async assignTask(
@@ -129,7 +137,7 @@ export class TaskRepository implements ITaskRepository {
             SET assignee_id = $1
             WHERE tenant_id = $2 
                 AND workspace_id = $3 
-                AND id = $4 
+                AND id = $4::uuid 
                 AND version = $5
             RETURNING
                 id,
@@ -144,39 +152,47 @@ export class TaskRepository implements ITaskRepository {
                 updated_at
         `;
 
-        const result = await client.query<{
-            id: string;
-            tenant_id: string;
-            workspace_id: string;
-            title: string;
-            priority: number;
-            state: number;
-            assignee_id: string | null;
-            version: number;
-            created_at: Date;
-            updated_at: Date;
-        }>(sql, [assigneeId, tenantId, workspaceId, taskId, expectedVersion]);
+        try {
+            const result = await client.query<{
+                id: string;
+                tenant_id: string;
+                workspace_id: string;
+                title: string;
+                priority: number;
+                state: number;
+                assignee_id: string | null;
+                version: number;
+                created_at: Date;
+                updated_at: Date;
+            }>(sql, [assigneeId, tenantId, workspaceId, taskId, expectedVersion]);
 
-        if (result.rowCount === 0) {
-            throw new Error("version mismatch or task not found");
+            if (result.rowCount === 0) {
+                throw new Error("version mismatch or task not found");
+            }
+
+            const row = result.rows[0];
+            if (!row) {
+                throw new Error("version mismatch or task not found");
+            }
+
+            return {
+                id: row.id,
+                tenantId: row.tenant_id,
+                workspaceId: row.workspace_id,
+                title: row.title,
+                priority: row.priority,
+                state: row.state,
+                assigneeId: row.assignee_id,
+                version: row.version,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            };
+        } catch (error: any) {
+            // If it's a UUID format error, treat it as "not found"
+            if (error.code === '22P02') { // invalid_text_representation
+                throw new Error("version mismatch or task not found");
+            }
+            throw error;
         }
-
-        const row = result.rows[0];
-        if (!row) {
-            throw new Error("version mismatch or task not found");
-        }
-
-        return {
-            id: row.id,
-            tenantId: row.tenant_id,
-            workspaceId: row.workspace_id,
-            title: row.title,
-            priority: row.priority,
-            state: row.state,
-            assigneeId: row.assignee_id,
-            version: row.version,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        };
     }
 }
