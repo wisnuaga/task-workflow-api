@@ -1,6 +1,7 @@
 export enum TaskState {
-    NEW = 0,
-    IN_PROGRESS = 1,
-    DONE = 2,
-    CANCELLED = 3,
+    UNSPECIFIED = 0,
+    NEW = 1,
+    IN_PROGRESS = 2,
+    DONE = 3,
+    CANCELLED = 4,
 }

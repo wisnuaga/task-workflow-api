@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { TaskRepository } from "../../../../src/infrastructure/db/repositories/TaskRepository";
-import { DBClient, QueryResult } from "../../../../src/infrastructure/db/DBClient";
+import { IDBClient, QueryResult } from "../../../../src/application/interfaces/db/IDBClient";
 import { TaskState } from "../../../../src/domain/tasks/entities/TaskState";
 import { TaskPriority } from "../../../../src/domain/tasks/entities/TaskPriority";
 import {
@@ -11,13 +11,14 @@ import {
 } from "./factories/taskFactory";
 
 describe("TaskRepository", () => {
-    let mockDb: DBClient;
+    let mockDb: IDBClient;
     let repository: TaskRepository;
 
     beforeEach(() => {
         resetTaskIdCounter();
         mockDb = {
             query: vi.fn(),
+            transaction: vi.fn(),
         };
         repository = new TaskRepository(mockDb);
     });
@@ -201,6 +202,27 @@ describe("TaskRepository", () => {
             const [sql, params] = vi.mocked(mockDb.query).mock.calls[0];
             expect(params).toContain("tenant'; DROP TABLE tasks; --");
             expect(sql).not.toContain("tenant'; DROP TABLE tasks; --");
+        });
+        it("should use provided transaction client if passed", async () => {
+            // Arrange
+            const taskInput = buildTaskInput();
+            const dbRow = buildTaskDbRow();
+            const mockResult: QueryResult = {
+                rows: [dbRow],
+                rowCount: 1,
+            };
+
+            const mockTxClient = {
+                query: vi.fn().mockResolvedValue(mockResult),
+                transaction: vi.fn(),
+            };
+
+            // Act
+            await repository.create(taskInput, mockTxClient);
+
+            // Assert
+            expect(mockTxClient.query).toHaveBeenCalledTimes(1);
+            expect(mockDb.query).not.toHaveBeenCalled();
         });
     });
 });

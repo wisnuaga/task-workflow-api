@@ -13,12 +13,6 @@ export class TaskService implements ITaskService {
         // Validation
         this.validateCreateTaskInput(input);
 
-        // TODO: Check idempotency key if provided
-        // if (input.idempotencyKey) {
-        //     // Check if we've already processed this request
-        //     // Return cached response if exists
-        // }
-
         // Apply business rules and convert DTO to domain input
         const taskInput = {
             tenantId: input.tenantId,
@@ -29,9 +23,7 @@ export class TaskService implements ITaskService {
         };
 
         // Call use case
-        const createdTask = await this.taskUseCase.create(taskInput);
-
-        // TODO: Save idempotency key with response if provided
+        const createdTask = await this.taskUseCase.create(taskInput, input.idempotencyKey);
 
         // Convert to output DTO
         return {
@@ -67,6 +59,9 @@ export class TaskService implements ITaskService {
             !Object.values(TaskPriority).includes(input.priority)
         ) {
             throw new ValidationError("invalid priority value", "priority");
+        }
+        if (!input.role) {
+            throw new ValidationError("role is required (Agent or Manager)", "role");
         }
     }
 }

@@ -1,6 +1,8 @@
 import Fastify, { FastifyInstance } from "fastify";
 import { PostgresDBClient } from "./infrastructure/db/PostgresDBClient";
 import { TaskRepository } from "./infrastructure/db/repositories/TaskRepository";
+import { TaskEventRepository } from "./infrastructure/db/repositories/TaskEventRepository";
+import { IdempotencyRepository } from "./infrastructure/db/repositories/IdempotencyRepository";
 import { TaskUseCase } from "./application/tasks/usecases/TaskUseCase";
 import { TaskService } from "./application/tasks/services/TaskService";
 import { TaskHandler } from "./interfaces/http/handlers/TaskHandler";
@@ -25,7 +27,9 @@ export function buildApp(): FastifyInstance {
 
     // Dependency Injection
     const taskRepository = new TaskRepository(dbClient);
-    const taskUseCase = new TaskUseCase(taskRepository);
+    const taskEventRepository = new TaskEventRepository(dbClient);
+    const idempotencyRepository = new IdempotencyRepository(dbClient);
+    const taskUseCase = new TaskUseCase(taskRepository, taskEventRepository, idempotencyRepository, dbClient);
     const taskService = new TaskService(taskUseCase);
     const taskHandler = new TaskHandler(taskService);
 

@@ -2,12 +2,14 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: task-workflow-pg
+    network_mode: host
+    command: -p 5436
     environment:
       POSTGRES_DB: task-workflow
       POSTGRES_USER: task_user
       POSTGRES_PASSWORD: task_pass
-    ports:
-      - "5436:5432"
+    # ports:
+    #   - "5436:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
