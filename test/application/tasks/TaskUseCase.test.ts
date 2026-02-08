@@ -4,10 +4,7 @@ import { ITaskRepository } from "../../../src/domain/tasks/repositories/ITaskRep
 import { TaskState } from "../../../src/domain/tasks/entities/TaskState";
 import { TaskPriority } from "../../../src/domain/tasks/entities/TaskPriority";
 import { Task } from "../../../src/domain/tasks/entities/Task";
-
 import { ITaskEventRepository } from "../../../src/domain/tasks/repositories/ITaskEventRepository";
-
-
 import { IIdempotencyRepository } from "../../../src/domain/idempotency/repositories/IIdempotencyRepository";
 import { IDBClient } from "../../../src/application/interfaces/db/IDBClient";
 

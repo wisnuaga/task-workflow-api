@@ -10,19 +10,19 @@ export class TaskRepository implements ITaskRepository {
 
         const sql = `
             INSERT INTO tasks (
-                tenant_id,
-                workspace_id,
-                title,
-                priority,
-                state
-            )
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING 
-                id,
-                version,
-                created_at,
-                updated_at
-        `;
+            tenant_id,
+            workspace_id,
+            title,
+            priority,
+            state
+        )
+        VALUES($1, $2, $3, $4, $5)
+        RETURNING
+        id,
+            version,
+            created_at,
+            updated_at
+                `;
 
         const params = [
             task.tenantId,

@@ -8,14 +8,11 @@ import { UserRole } from "../../../domain/users/entities/UserRole";
 export class TaskHandler {
     constructor(private readonly taskService: ITaskService) { }
 
-
-
     async createTask(request: FastifyRequest, reply: FastifyReply) {
         try {
             const body = request.body as any;
             const headers = request.headers;
             const params = request.params as any;
-
             const roleHeader = headers["x-role"] as string;
             let role: UserRole = UserRole.UNSPECIFIED;
 
