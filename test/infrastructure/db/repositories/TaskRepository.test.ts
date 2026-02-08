@@ -225,4 +225,193 @@ describe("TaskRepository", () => {
             expect(mockDb.query).not.toHaveBeenCalled();
         });
     });
+
+    describe("findById", () => {
+        it("should return task when found", async () => {
+            // Arrange
+            const taskId = "e955091b-e322-48c6-8452-a8fdc913f69e";
+            const tenantId = "tenant-1";
+            const workspaceId = "workspace-1";
+
+            const dbRow = {
+                id: taskId,
+                tenant_id: tenantId,
+                workspace_id: workspaceId,
+                title: "Test Task",
+                priority: TaskPriority.HIGH,
+                state: TaskState.NEW,
+                assignee_id: null,
+                version: 1,
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+
+            const mockResult: QueryResult = {
+                rows: [dbRow],
+                rowCount: 1,
+            };
+
+            vi.mocked(mockDb.query).mockResolvedValue(mockResult);
+
+            // Act
+            const result = await repository.findById(taskId, tenantId, workspaceId);
+
+            // Assert
+            expect(result).not.toBeNull();
+            expect(result?.id).toBe(taskId);
+            expect(result?.tenantId).toBe(tenantId);
+            expect(result?.workspaceId).toBe(workspaceId);
+            expect(result?.assigneeId).toBeNull();
+        });
+
+        it("should return null when task not found", async () => {
+            // Arrange
+            const mockResult: QueryResult = {
+                rows: [],
+                rowCount: 0,
+            };
+
+            vi.mocked(mockDb.query).mockResolvedValue(mockResult);
+
+            // Act
+            const result = await repository.findById("non-existent", "tenant-1", "workspace-1");
+
+            // Assert
+            expect(result).toBeNull();
+        });
+
+        it("should return null for invalid UUID format", async () => {
+            // Arrange
+            const invalidUuid = "invalid-uuid";
+            const error: any = new Error("invalid input syntax for type uuid");
+            error.code = "22P02";
+
+            vi.mocked(mockDb.query).mockRejectedValue(error);
+
+            // Act
+            const result = await repository.findById(invalidUuid, "tenant-1", "workspace-1");
+
+            // Assert
+            expect(result).toBeNull();
+        });
+
+        it("should use transaction client when provided", async () => {
+            // Arrange
+            const mockTxClient = {
+                query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+                transaction: vi.fn(),
+            };
+
+            // Act
+            await repository.findById("task-1", "tenant-1", "workspace-1", mockTxClient);
+
+            // Assert
+            expect(mockTxClient.query).toHaveBeenCalledTimes(1);
+            expect(mockDb.query).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("assignTask", () => {
+        it("should assign task successfully", async () => {
+            // Arrange
+            const taskId = "e955091b-e322-48c6-8452-a8fdc913f69e";
+            const assigneeId = "user-123";
+            const expectedVersion = 1;
+            const tenantId = "tenant-1";
+            const workspaceId = "workspace-1";
+
+            const dbRow = {
+                id: taskId,
+                tenant_id: tenantId,
+                workspace_id: workspaceId,
+                title: "Test Task",
+                priority: TaskPriority.HIGH,
+                state: TaskState.NEW,
+                assignee_id: assigneeId,
+                version: 2,
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+
+            const mockResult: QueryResult = {
+                rows: [dbRow],
+                rowCount: 1,
+            };
+
+            vi.mocked(mockDb.query).mockResolvedValue(mockResult);
+
+            // Act
+            const result = await repository.assignTask(taskId, assigneeId, expectedVersion, tenantId, workspaceId);
+
+            // Assert
+            expect(result.assigneeId).toBe(assigneeId);
+            expect(result.version).toBe(2);
+
+            const [sql, params] = vi.mocked(mockDb.query).mock.calls[0];
+            expect(sql).toContain("UPDATE tasks");
+            expect(sql).toContain("SET assignee_id = $1");
+            expect(sql).toContain("WHERE tenant_id = $2");
+            expect(sql).toContain("AND workspace_id = $3");
+            expect(sql).toContain("AND id = $4::uuid");
+            expect(sql).toContain("AND version = $5");
+            expect(params).toEqual([assigneeId, tenantId, workspaceId, taskId, expectedVersion]);
+        });
+
+        it("should throw error when version mismatch", async () => {
+            // Arrange
+            const mockResult: QueryResult = {
+                rows: [],
+                rowCount: 0,
+            };
+
+            vi.mocked(mockDb.query).mockResolvedValue(mockResult);
+
+            // Act & Assert
+            await expect(
+                repository.assignTask("task-1", "user-1", 1, "tenant-1", "workspace-1")
+            ).rejects.toThrow("version mismatch or task not found");
+        });
+
+        it("should throw error for invalid UUID format", async () => {
+            // Arrange
+            const invalidUuid = "invalid-uuid";
+            const error: any = new Error("invalid input syntax for type uuid");
+            error.code = "22P02";
+
+            vi.mocked(mockDb.query).mockRejectedValue(error);
+
+            // Act & Assert
+            await expect(
+                repository.assignTask(invalidUuid, "user-1", 1, "tenant-1", "workspace-1")
+            ).rejects.toThrow("version mismatch or task not found");
+        });
+
+        it("should use transaction client when provided", async () => {
+            // Arrange
+            const dbRow = {
+                id: "task-1",
+                tenant_id: "tenant-1",
+                workspace_id: "workspace-1",
+                title: "Test Task",
+                priority: TaskPriority.HIGH,
+                state: TaskState.NEW,
+                assignee_id: "user-1",
+                version: 2,
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+
+            const mockTxClient = {
+                query: vi.fn().mockResolvedValue({ rows: [dbRow], rowCount: 1 }),
+                transaction: vi.fn(),
+            };
+
+            // Act
+            await repository.assignTask("task-1", "user-1", 1, "tenant-1", "workspace-1", mockTxClient);
+
+            // Assert
+            expect(mockTxClient.query).toHaveBeenCalledTimes(1);
+            expect(mockDb.query).not.toHaveBeenCalled();
+        });
+    });
 });
