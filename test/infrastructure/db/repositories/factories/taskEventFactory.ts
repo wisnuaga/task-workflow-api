@@ -1,5 +1,5 @@
-import { TaskEventType } from "../../../../../../src/domain/tasks/entities/TaskEventType";
-import { TaskEvent } from "../../../../../../src/domain/tasks/entities/TaskEvent";
+import { TaskEventType } from "../../../../../src/domain/tasks/entities/TaskEventType";
+import { TaskEvent } from "../../../../../src/domain/tasks/entities/TaskEvent";
 import { randomUUID } from "node:crypto";
 
 export const buildTaskEventInput = (overrides?: Partial<Omit<TaskEvent, "id" | "eventType" | "createdAt">>): Omit<TaskEvent, "id" | "eventType" | "createdAt"> => {
