@@ -8,6 +8,9 @@ export class IdempotencyRepository implements IIdempotencyRepository {
 
     async findByKey(tenantId: string, workspaceId: string, action: IdempotencyAction, key: string, tx?: IDBClient): Promise<Idempotency | null> {
         const client = tx || this.db;
+
+        // TODO: use WHERE expired_at > NOW() AND tenant_id = $1 AND workspace_id = $2 AND action = $3 AND key = $4
+        // Then update indexes
         const sql = `
             SELECT 
                 id,

@@ -8,6 +8,7 @@ import { NotFoundError } from "../../../application/tasks/services/errors/NotFou
 import { ConflictError } from "../../../application/tasks/services/errors/ConflictError";
 import { TaskPriority } from "../../../domain/tasks/entities/TaskPriority";
 import { UserRole } from "../../../domain/users/entities/UserRole";
+import { serializeTask } from "../utils/responseSerializer";
 
 export class TaskHandler {
     constructor(private readonly taskService: ITaskService) { }
@@ -41,7 +42,7 @@ export class TaskHandler {
 
             const result = await this.taskService.createTask(input);
 
-            return reply.code(201).send(result);
+            return reply.code(201).send({ task: serializeTask(result.task) });
         } catch (error) {
             if (error instanceof ValidationError) {
                 return reply.code(400).send({
@@ -110,7 +111,7 @@ export class TaskHandler {
 
             const result = await this.taskService.assignTask(input);
 
-            return reply.code(200).send(result);
+            return reply.code(200).send({ task: serializeTask(result.task) });
         } catch (error) {
             if (error instanceof AuthorizationError) {
                 return reply.code(403).send({
