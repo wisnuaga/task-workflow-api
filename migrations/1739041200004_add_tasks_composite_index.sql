@@ -1,5 +1,9 @@
 -- Up Migration
 
+-- Add assignee_id column to tasks table
+ALTER TABLE tasks
+ADD COLUMN assignee_id VARCHAR;
+
 -- Add composite unique index on (tenant_id, workspace_id, id)
 -- This enforces that task IDs are unique within a tenant/workspace scope
 -- and provides optimal query performance for multi-tenant lookups
@@ -13,3 +17,4 @@ ON tasks(tenant_id, workspace_id, id, version);
 -- Down Migration
 -- DROP INDEX IF EXISTS idx_tasks_tenant_workspace_id_version;
 -- DROP INDEX IF EXISTS idx_tasks_tenant_workspace_id;
+-- ALTER TABLE tasks DROP COLUMN assignee_id;
