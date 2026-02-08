@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { TaskUseCase } from "../../../../src/application/tasks/usecases/TaskUseCase";
-import { ITaskRepository } from "../../../../src/domain/tasks/repositories/ITaskRepository";
-import { TaskState } from "../../../../src/domain/tasks/entities/TaskState";
-import { TaskPriority } from "../../../../src/domain/tasks/entities/TaskPriority";
-import { Task } from "../../../../src/domain/tasks/entities/Task";
+import { TaskUseCase } from "../../../src/application/tasks/usecases/TaskUseCase";
+import { ITaskRepository } from "../../../src/domain/tasks/repositories/ITaskRepository";
+import { TaskState } from "../../../src/domain/tasks/entities/TaskState";
+import { TaskPriority } from "../../../src/domain/tasks/entities/TaskPriority";
+import { Task } from "../../../src/domain/tasks/entities/Task";
 
 describe("TaskUseCase", () => {
     let useCase: TaskUseCase;
