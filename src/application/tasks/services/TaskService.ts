@@ -60,5 +60,8 @@ export class TaskService implements ITaskService {
         ) {
             throw new ValidationError("invalid priority value", "priority");
         }
+        if (!input.role) {
+            throw new ValidationError("role is required (Agent or Manager)", "role");
+        }
     }
 }

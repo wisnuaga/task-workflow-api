@@ -3,6 +3,7 @@ import { TaskService } from "../../../../src/application/tasks/services/TaskServ
 import { ITaskUseCase } from "../../../../src/domain/tasks/usecases/ITaskUseCase";
 import { TaskPriority } from "../../../../src/domain/tasks/entities/TaskPriority";
 import { TaskState } from "../../../../src/domain/tasks/entities/TaskState";
+import { UserRole } from "../../../../src/domain/users/entities/UserRole";
 import { Task } from "../../../../src/domain/tasks/entities/Task";
 import { ValidationError } from "../../../../src/application/tasks/services/errors/ValidationError";
 
@@ -25,6 +26,7 @@ describe("TaskService", () => {
                 workspaceId: "workspace-1",
                 title: "Test Task",
                 priority: TaskPriority.HIGH,
+                role: UserRole.AGENT,
             };
 
             const createdTask: Task = {
@@ -62,6 +64,7 @@ describe("TaskService", () => {
                 tenantId: "tenant-2",
                 workspaceId: "workspace-2",
                 title: "Task without priority",
+                role: UserRole.MANAGER,
             };
 
             const createdTask: Task = {
@@ -99,6 +102,7 @@ describe("TaskService", () => {
                 tenantId: "tenant-3",
                 workspaceId: "workspace-3",
                 title: "",
+                role: UserRole.AGENT,
             };
 
             // Act & Assert
@@ -117,6 +121,7 @@ describe("TaskService", () => {
                 tenantId: "tenant-4",
                 workspaceId: "workspace-4",
                 title: longTitle,
+                role: UserRole.AGENT,
             };
 
             // Act & Assert
@@ -135,6 +140,7 @@ describe("TaskService", () => {
                 tenantId: "tenant-5",
                 workspaceId: "workspace-5",
                 title: maxTitle,
+                role: UserRole.AGENT,
             };
 
             const createdTask: Task = {
@@ -165,6 +171,7 @@ describe("TaskService", () => {
                 tenantId: "",
                 workspaceId: "workspace-6",
                 title: "Test",
+                role: UserRole.AGENT,
             };
 
             // Act & Assert
@@ -179,6 +186,7 @@ describe("TaskService", () => {
                 tenantId: "tenant-7",
                 workspaceId: "",
                 title: "Test",
+                role: UserRole.AGENT,
             };
 
             // Act & Assert
@@ -200,6 +208,7 @@ describe("TaskService", () => {
                     workspaceId: "workspace-8",
                     title: `${priority} priority task`,
                     priority: priority,
+                    role: UserRole.AGENT,
                 };
 
                 const createdTask: Task = {
@@ -221,6 +230,23 @@ describe("TaskService", () => {
 
                 expect(result.task.priority).toBe(priority);
             }
+        });
+
+        it("should throw ValidationError when role is missing", async () => {
+            // Arrange
+            const input = {
+                tenantId: "tenant-9",
+                workspaceId: "workspace-9",
+                title: "No Role Task",
+            };
+
+            // Act & Assert
+            await expect(service.createTask(input)).rejects.toThrow(
+                ValidationError
+            );
+            await expect(service.createTask(input)).rejects.toThrow(
+                "role is required"
+            );
         });
     });
 });
