@@ -5,15 +5,23 @@ import { TaskState } from "../../../src/domain/tasks/entities/TaskState";
 import { TaskPriority } from "../../../src/domain/tasks/entities/TaskPriority";
 import { Task } from "../../../src/domain/tasks/entities/Task";
 
+import { IDBClient } from "../../../src/application/interfaces/db/IDBClient";
+
 describe("TaskUseCase", () => {
     let useCase: TaskUseCase;
     let mockRepository: ITaskRepository;
+    let mockDb: IDBClient;
 
     beforeEach(() => {
         mockRepository = {
             create: vi.fn(),
         };
-        useCase = new TaskUseCase(mockRepository);
+        mockDb = {
+            query: vi.fn(),
+            transaction: vi.fn().mockImplementation(async (cb) => cb(mockDb)),
+        } as unknown as IDBClient;
+
+        useCase = new TaskUseCase(mockRepository, mockDb);
     });
 
     describe("create", () => {
@@ -47,7 +55,7 @@ describe("TaskUseCase", () => {
 
             // Assert
             expect(mockRepository.create).toHaveBeenCalledTimes(1);
-            expect(mockRepository.create).toHaveBeenCalledWith(taskInput);
+            expect(mockRepository.create).toHaveBeenCalledWith(taskInput, mockDb);
             expect(result).toEqual(createdTask);
         });
 
